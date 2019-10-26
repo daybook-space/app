@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 import sqlite3
+from datetime import datetime
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
 #conn.execute("DROP TABLE posts")
-#conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score INTEGER, sentiment_magnitude INTEGER, sleep INTEGER, wake INTEGER, sleepTime INTEGER)")
+#conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day TEXT)")
 
 
 @app.route('/makeJournal', methods = ['POST'])
@@ -12,6 +13,7 @@ def makeJournal():
     result = request.json
     journal = result["journal"]
     user = result["user"]
+    day = datetime.now().strftime("%m-%d-%y")
     sentiment_score = 0
     sentiment_magnitude = 0
     #sentiment = analysis
@@ -20,7 +22,7 @@ def makeJournal():
     sleepTime = calcSleep(sleep, wake)
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal, user, sentiment_score, sentiment_magnitude, sleep, wake, sleepTime) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d)" %(journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime)
+    command = "INSERT INTO posts (journal, user, sentiment_score, sentiment_magnitude, sleep, wake, sleepTime,day) VALUES (\"%s\",\"%s\",%f,%f,%d,%d,%d,\"%s\")" %(journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime,day)
     cursor.execute(command)
     conn.commit()
     return command
@@ -45,7 +47,7 @@ def updaateJournal(Id):
     sleepTime = calcSleep(sleep, wake)
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "UPDATE posts SET journal = \"%s\", user = \"%s\", sentiment_score = %d, sentiment_magnitude=%d, sleep = %d, wake = %d, sleepTime = %d WHERE id = %d" % (journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime,int(Id))
+    command = "UPDATE posts SET journal = \"%s\", user = \"%s\", sentiment_score = %f, sentiment_magnitude=%f, sleep = %d, wake = %d, sleepTime = %d WHERE id = %d" % (journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime,int(Id))
     cursor.execute(command)
     conn.commit()
     return command
