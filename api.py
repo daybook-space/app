@@ -3,8 +3,8 @@ import sqlite3
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
-conn.execute("DROP TABLE posts")
-conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score INTEGER, sentiment_magnitude INTEGER, sleep INTEGER, wake INTEGER)")
+#conn.execute("DROP TABLE posts")
+#conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score INTEGER, sentiment_magnitude INTEGER, sleep INTEGER, wake INTEGER, sleepTime INTEGER)")
 
 
 @app.route('/makeJournal', methods = ['POST'])
@@ -17,9 +17,10 @@ def makeJournal():
     #sentiment = analysis
     sleep = result["sleep"]
     wake = result["wake"]
+    sleepTime = calcSleep(sleep, wake)
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal,user,sentiment_score,sentiment_magnitude,sleep,wake) VALUES (\"" + journal +"\",\"" + user + "\"," + str(sentiment_score) + "," str(sentiment_magnitude) + "," + str(sleep) + "," + str(wake) +")"
+    command = "INSERT INTO posts (journal, user, sentiment_score, sentiment_magnitude, sleep, wake, sleepTime) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d)" %(journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime)
     cursor.execute(command)
     conn.commit()
     return command
@@ -31,15 +32,32 @@ def getJournal():
     cursor = conn.cursor()
     return jsonify(cursor.execute("SELECT * FROM posts LIMIT 10").fetchall())
 
-@app.route('/updateJournal', methods = ['POST'])
-def updateJournal():
+@app.route('/updateJournal/<Id>', methods = ['POST'])
+def updaateJournal(Id):
     result = request.json
-    journal = request.json["journal"]
-    sentiment = 0
-    sleep = 0
-    wake = 0
+    journal = result["journal"]
+    user = result["user"]
+    sentiment_score = 0
+    sentiment_magnitude = 0
+    #sentiment = analysis
+    sleep = result["sleep"]
+    wake = result["wake"]
+    sleepTime = calcSleep(sleep, wake)
     conn = sqlite3.connect('database.db')
-    conn.execute("UPDATE posts SET journal = %s, sentiment = %d, sleep = %d, wake = %d WHERE journal = %s" %(journal,sentiment,sleep,wake))
+    cursor = conn.cursor()
+    command = "UPDATE posts SET journal = \"%s\", user = \"%s\", sentiment_score = %d, sentiment_magnitude=%d, sleep = %d, wake = %d, sleepTime = %d WHERE id = %d" % (journal,user,sentiment_score,sentiment_magnitude,sleep,wake,sleepTime,int(Id))
+    cursor.execute(command)
+    conn.commit()
+    return command
+
+def calcSleep(sleep, wake):
+    if sleep == wake:
+        totalSleep = 24;
+    elif sleep > wake:
+        totalSleep = wake + (2400 - sleep)
+    else:
+        totalSleep = wake - sleep
+    return totalSleep
 
 if __name__ == '__main__':
    #app.EXPLAIN_TEMPLATE_LOADING = True
