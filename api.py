@@ -60,7 +60,6 @@ def makeJournal(result):
     return jsonify(journal_id)
 
 def updateJournal(journal_id, result):
-    journal_id = result["id"]
     journal = result["journal"]
     user = result["user"]
 
