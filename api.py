@@ -24,6 +24,9 @@ def run_sentiment(journal_text, journal_id):
     command = f"UPDATE posts SET sentiment = {sentiment} WHERE id = {journal_id}"
     cursor.execute(command)
 
+    command = f"DELETE FROM sentiments WHERE id = {journal_id}"
+    cursor.execute(command)
+
     for category in entity_dict:
         for entity in entity_dict[category]:
             command = f"INSERT INTO sentiments (id, category, word, sentiment_score, sentiment_magnitude) VALUES ({journal_id}, \"{category}\", \"{entity[0]}\", {entity[1]}, {entity[2]})"
@@ -69,9 +72,6 @@ def updateJournal():
     sleepTime = calcSleep(sleep, wake)
     try:
         command = f"UPDATE posts SET journal = \"{journal}\", sleep = {sleep}, wake = {wake}, sleepTime = {sleepTime} WHERE id = {journal_id}"
-        cursor.execute(command)
-
-        command = f"DELETE FROM sentiments WHERE id = {journal_id}"
         cursor.execute(command)
         conn.commit()
 
