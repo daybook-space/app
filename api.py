@@ -104,6 +104,25 @@ def getJournalDateRange(user,startDate, endDate):
         result.append({elt: entry[i] for i, elt in enumerate(elt_order) if elt != False})
     return jsonify(result)
 
+@app.route('/emotionEffectors/<user>/<startDate>/<endDate>', methods = ['GET'])
+def getEmotionEffectors(user, startDate, endDate):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    command = f"SELECT category, word, sentiment_score, sentiment_magnitude FROM posts p INNER JOIN sentiments s WHERE p.id = s.id AND day BETWEEN \'{startDate}\' AND \'{endDate}\' AND user = \"{user}\""
+    resp = cursor.execute(command).fetchall()
+
+    entity_dict = {
+        'events': [],
+        'people': [],
+        'locations': [],
+        'other': []
+    }
+
+    for word in resp:
+        entity_dict[word[0]].append((word[1], word[2], word[3]))
+
+    return jsonify(top_emotion_effectors(entity_dict))
+
 @app.route('/updateJournal/<journal_id>', methods = ['POST'])
 def _make_update_journal(journal_id):
     journal_id = int(journal_id)
