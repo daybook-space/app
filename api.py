@@ -42,7 +42,7 @@ def run_sentiment(journal_text, journal_id):
 def makeJournal(result):
     journal = result["journal"]
     user = result["user"]
-    day = datetime.now().strftime("%Y-%m-%d")
+    day = result["day"]
     sentiment = 0 # We'll spawn a thread to fix this soon.
     sleep = result["sleep"]
     wake = result["wake"]
