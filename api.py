@@ -23,13 +23,13 @@ def run_sentiment(journal_text, journal_id):
     cursor = conn.cursor()
     command = f"UPDATE posts SET sentiment = {sentiment} WHERE id = {journal_id}"
     cursor.execute(command)
-    conn.commit()
 
     for category in entity_dict:
         for entity in entity_dict[category]:
             command = f"INSERT INTO sentiments (id, category, word, sentiment_score, sentiment_magnitude) VALUES ({journal_id}, \"{category}\", \"{entity[0]}\", {entity[1]}, {entity[2]})"
             cursor.execute(sentimentCommand)
-            conn.commit()
+
+    conn.commit()
 
     print(f"[INFO] Done running sentiment for journal {journal_id}")
 
@@ -46,6 +46,7 @@ def makeJournal(result):
     command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d)" %(journal, user, sentiment, sleep, wake, sleepTime)
     cursor.execute(command)
     journal_id = cursor.lastrowid
+    conn.commit()
 
     sent_thr = threading.Thread(target=run_sentiment, args=(result["journal"], journal_id,))
     sent_thr.start()
@@ -54,16 +55,21 @@ def makeJournal(result):
 def updateJournal():
     journal_id = result["id"]
     journal = result["journal"]
+    user = result["user"]
+
+    # sanity check!
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE id = {journal_id}, user = \"{user}\");"
+    if not cursor.execute(command):
+        return jsonify("Invalid id/user pair")
+
     sleep = result["sleep"]
     wake = result["wake"]
     sleepTime = calcSleep(sleep, wake)
-
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
     try:
         command = f"UPDATE posts SET journal = \"{journal}\", sleep = {sleep}, wake = {wake}, sleepTime = {sleepTime} WHERE id = {journal_id}"
         cursor.execute(command)
-        conn.commit()
 
         command = f"DELETE FROM sentiments WHERE id = {journal_id}"
         cursor.execute(command)
