@@ -116,6 +116,20 @@ def getJournalDateRange(user,startDate, endDate):
         result.append({elt: entry[i] for i, elt in enumerate(elt_order) if elt != False})
     return jsonify(result)
 
+@app.route('/getSingleJournal/<user>/<journal_id>', methods = ['GET'])
+def getSingleJournal(user, journal_id):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE id = {journal_id} AND user = \"{user}\");"
+    if not cursor.execute(command).fetchall()[0][0]:
+        #return jsonify("Invalid id/user pair")
+        raise UserMismatch403
+
+    resp = cursor.execute(f"SELECT * FROM posts WHERE id = {journal_id} AND user = \"{user}\"").fetchall()
+    elt_order = ['id', 'content', 'user', 'sentiment', 'sleepTime', 'wakeupTime', 'sleepAmount', 'date']
+    return jsonify({elt: resp[0][i] for i, elt in enumerate(elt_order) if elt != False})
+
+
 @app.route('/emotionEffectors/<user>/<startDate>/<endDate>', methods = ['GET'])
 def getEmotionEffectors(user, startDate, endDate):
     conn = sqlite3.connect('database.db')
