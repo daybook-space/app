@@ -102,14 +102,14 @@ def updateJournal(journal_id, result):
 
     sent_thr = threading.Thread(target=run_sentiment, args=(result["journal"], journal_id,))
     sent_thr.start()
-    return jsonify(0)
+    return jsonify(journal_id)
 
 #date formats should be YYYY-MM-DD
 @app.route('/getJournal/<user>/<startDate>/<endDate>', methods = ['GET'])
 def getJournalDateRange(user,startDate, endDate):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    resp = cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' AND \'{endDate}\' AND user = \"{user}\"").fetchall()
+    resp = cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' AND \'{endDate}\' AND user = \"{user}\" ORDER BY day DESC").fetchall()
     result = []
     elt_order = ['id', 'content', 'user', 'sentiment', 'sleepTime', 'wakeupTime', 'sleepAmount', 'date']
     for entry in resp:
