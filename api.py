@@ -116,7 +116,55 @@ def getEmotionEffectors(user, startDate, endDate):
     for word in resp:
         entity_dict[word[0]].append((word[1], word[2], word[3]))
 
-    return jsonify(top_emotion_effectors(entity_dict))
+    processed_effectors = top_emotion_effectors(entity_dict)
+
+    final_ret = {
+        'events': {
+            'happy': [],
+            'sad': []
+        },
+        'people': {
+            'happy': [],
+            'sad': []
+        },
+        'locations': {
+            'happy': [],
+            'sad': []
+        },
+        'other': {
+            'happy': [],
+            'sad': []
+        }
+    }
+
+    for category in processed_effectors:
+        for word in processed_effectors[category]:
+            if len(final_ret[category]['happy']) >= 5:
+                break
+            if word[1] < 0:
+                break
+
+            append_dict = {
+                "entity": word[0],
+                "sentiment": word[1]
+            }
+
+            final_ret[category]['happy'].append(append_dict)
+
+        for word in list(reversed(processed_effectors[category])):
+            if len(final_ret[category]['sad']) >= 5:
+                break
+            if word[1] >= 0:
+                break
+
+            append_dict = {
+                "entity": word[0],
+                "sentiment": word[1]
+            }
+
+            final_ret[category]['sad'].append(append_dict)
+
+    return jsonify(final_ret)
 
 @app.route('/updateJournal/<journal_id>', methods = ['POST'])
 def _make_update_journal(journal_id):
