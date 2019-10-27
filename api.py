@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
 #conn.execute("DROP TABLE posts")
-conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day TEXT)")
+conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day timestamp)")
 
 
 @app.route('/makeJournal', methods = ['POST'])
@@ -13,7 +13,7 @@ def makeJournal():
     result = request.json
     journal = result["journal"]
     user = result["user"]
-    day = datetime.now().strftime("%m-%d-%y")
+    day = datetime.now().strftime("%Y-%m-%d")
     sentiment_score = 0
     sentiment_magnitude = 0
     #sentiment = analysis
@@ -34,11 +34,12 @@ def getJournal():
     cursor = conn.cursor()
     return jsonify(cursor.execute("SELECT * FROM posts LIMIT 10").fetchall())
 
-#@app.route('/getJournal/<startDate>/<endDate>', methods = ['GET'])
-#def getJournalDateRange(startDate, endDate):
- #   conn = sqlite3.connect('database.db')
-  #  cursor = conn.cursor()
-   # return jsonify(cursor.execute("SELECT * FROM posts WHERE strp").fetchall())
+#date formats should be YYYY-MM-DD
+@app.route('/getJournal/<startDate>/<endDate>', methods = ['GET'])
+def getJournalDateRange(startDate, endDate):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    return jsonify(cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' and \'{endDate}\'").fetchall())
 
 @app.route('/updateJournal/<Id>', methods = ['POST'])
 def updaateJournal(Id):
