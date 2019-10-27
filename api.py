@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
 try:
-    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day timestamp)")
+    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
     #"category" below refer to event, people, location, other
     conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 except:
@@ -50,7 +50,7 @@ def makeJournal(result):
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,\"%s\")" %(journal, user, sentiment, sleep, wake, sleepTime, day)
+    command = f"INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"{journal}\",\"{user}\",{sentiment},\"{sleep}\",\"{wake}\",{sleepTime},\"{day}\")"
     cursor.execute(command)
     journal_id = cursor.lastrowid
     conn.commit()
@@ -125,9 +125,7 @@ def calcSleep(sleep, wake):
     else:
         totalMin = wake - sleep
     totalHour = totalMin / 60
-    totalSleepMin = totalMin - (totalHour * 60)
-    totalSleep = totalHour + (totalSleepMin // 60)
-    return totalSleep
+    return totalHour
 
 if __name__ == '__main__':
    #app.EXPLAIN_TEMPLATE_LOADING = True
