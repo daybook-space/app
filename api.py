@@ -96,7 +96,7 @@ def getJournalDateRange(user,startDate, endDate):
     cursor = conn.cursor()
     resp = cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' AND \'{endDate}\' AND user = \"{user}\"").fetchall()
     result = []
-    elt_order = ['id', 'journal', 'user', 'sentiment', 'sleep', 'wake', 'sleepTime', 'timestamp']
+    elt_order = ['id', 'content', 'user', 'sentiment', 'sleepTime', 'wakeupTime', 'sleepAmount', 'date']
     for entry in resp:
         result.append({elt: entry[i] for i, elt in enumerate(elt_order) if elt != False})
     return jsonify(result)
