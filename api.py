@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
+import logging
 
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from ml.daybookml.summary import top_emotion_effectors
 import threading
 
 app = Flask(__name__)
+logging.basicConfig(filename='../daybook.log', level=logging.DEBUG)
 CORS(app)
 
 conn = sqlite3.connect('database.db')
@@ -18,7 +20,7 @@ conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCRE
 conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 
 def run_sentiment(journal_text, journal_id):
-    print("[INFO] running sentiment")
+    app.logger.info("running sentiment")
     sentiment, entity_dict = analyze_journal(journal_text)
 
     conn = sqlite3.connect('database.db')
@@ -36,7 +38,7 @@ def run_sentiment(journal_text, journal_id):
 
     conn.commit()
 
-    print(f"[INFO] Done running sentiment for journal {journal_id}")
+    app.logger.info(f"[INFO] Done running sentiment for journal {journal_id}")
 
 class AlreadyExist403(Exception):
     pass
