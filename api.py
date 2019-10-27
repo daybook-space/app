@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
 try:
-    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day timestamp)")
+    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
     #"category" below refer to event, people, location, other
     conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 except:
@@ -50,7 +50,7 @@ def makeJournal(result):
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,\"%s\")" %(journal, user, sentiment, sleep, wake, sleepTime, day)
+    command = f"INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"{journal}\",\"{user}\",{sentiment},\"{sleep}\",\"{wake}\",{sleepTime},\"{day}\")"
     cursor.execute(command)
     journal_id = cursor.lastrowid
     conn.commit()
@@ -114,13 +114,18 @@ def _make_update_journal(journal_id):
         return updateJournal(journal_id, result)
 
 def calcSleep(sleep, wake):
-    if sleep == wake:
-        totalSleep = 24;
-    elif sleep > wake:
-        totalSleep = wake + (2400 - sleep)
+    sleepList = sleep.split(":")
+    wakeList = wake.split(":")
+    sleepMin = (int(sleepList[0]) * 60) + int(sleepList[1])
+    wakeMin = (int(wakeList[0]) * 60) + int(wakeList[1])
+    if sleepMin == wakeMin:
+        totalMin = 24 * 60
+    else if sleepMin > wakeMin:
+        totalMin = wakeMin + (1440 - sleepMin)
     else:
-        totalSleep = wake - sleep
-    return (totalSleep / 100)
+        totalMin = wake - sleep
+    totalHour = totalMin / 60
+    return totalHour
 
 if __name__ == '__main__':
    #app.EXPLAIN_TEMPLATE_LOADING = True
