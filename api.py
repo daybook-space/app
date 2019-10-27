@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import sqlite3
 
 from datetime import datetime
@@ -9,6 +10,7 @@ from ml.daybookml.summary import top_emotion_effectors
 import threading
 
 app = Flask(__name__)
+CORS(app)
 
 conn = sqlite3.connect('database.db')
 conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
