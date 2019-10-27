@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import sqlite3
 
+from datetime import datetime
+
 from ml.daybookml.analysis import analyze_journal
 from ml.daybookml.summary import top_emotion_effectors
 
@@ -9,12 +11,10 @@ import threading
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
-#conn.execute("DROP TABLE posts")
-#conn.execute("DROP TABLE sentiments")
 try:
-    conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER)")
+    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day timestamp)")
     #"category" below refer to event, people, location, other
-    conn.execute("CREATE TABLE sentiments (id INTEGER, category TEXT, word TEXT, sentiment DECIMAL, sentiment_magnitude DECIMAL)")
+    conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment DECIMAL, sentiment_magnitude DECIMAL)")
 except:
     pass
 
@@ -42,6 +42,7 @@ def run_sentiment(journal_text, journal_id):
 def makeJournal(result):
     journal = result["journal"]
     user = result["user"]
+    day = datetime.now().strftime("%Y-%m-%d")
     sentiment = 0 # We'll spawn a thread to fix this soon.
     sleep = result["sleep"]
     wake = result["wake"]
@@ -49,7 +50,7 @@ def makeJournal(result):
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d)" %(journal, user, sentiment, sleep, wake, sleepTime)
+    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d,\"%s\")" %(journal, user, sentiment, sleep, wake, sleepTime, day)
     cursor.execute(command)
     journal_id = cursor.lastrowid
     conn.commit()
@@ -58,7 +59,7 @@ def makeJournal(result):
     sent_thr.start()
     return jsonify(journal_id)
 
-def updateJournal():
+def updateJournal(journal_id, result):
     journal_id = result["id"]
     journal = result["journal"]
     user = result["user"]
@@ -84,20 +85,21 @@ def updateJournal():
     except:
         return jsonify(-1)
 
-@app.route('/updateJournal', methods = ['POST'])
-def _make_update_journal():
-    result = request.json
-    if result['id'] == 0:
-        return makeJournal(request)
-    else:
-        return updateJournal(request)
-
-#based on date range
-@app.route('/getJournal', methods = ['GET'])
-def getJournal():
+#date formats should be YYYY-MM-DD
+@app.route('/getJournal/<startDate>/<endDate>', methods = ['GET'])
+def getJournalDateRange(startDate, endDate):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    return jsonify(cursor.execute("SELECT * FROM sentiments LIMIT 10").fetchall())
+    return jsonify(cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' and \'{endDate}\'").fetchall())
+
+@app.route('/updateJournal/<journal_id>', methods = ['POST'])
+def _make_update_journal(journal_id):
+    journal_id = int(journal_id)
+    result = request.json
+    if journal_id == 0:
+        return makeJournal(request)
+    else:
+        return updateJournal(journal_id, request)
 
 def calcSleep(sleep, wake):
     if sleep == wake:
