@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify
 import sqlite3
 
 from datetime import datetime
@@ -59,6 +59,13 @@ def makeJournal(result):
     sent_thr.start()
     return jsonify(journal_id)
 
+class UserMismatch403(Exception):
+    pass
+
+@app.errorhandler(UserMismatch403)
+def special_page_not_found(error):
+    return "Username and Journal ID do not match, or journal does not exist!", 403
+
 def updateJournal(journal_id, result):
     journal = result["journal"]
     user = result["user"]
@@ -69,7 +76,7 @@ def updateJournal(journal_id, result):
     command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE id = {journal_id} AND user = \"{user}\");"
     if not cursor.execute(command).fetchall()[0][0]:
         #return jsonify("Invalid id/user pair")
-        abort(403)
+        raise UserMismatch403
 
     sleep = result["sleep"]
     wake = result["wake"]
