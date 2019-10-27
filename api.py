@@ -11,12 +11,9 @@ import threading
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
-try:
-    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
-    #"category" below refer to event, people, location, other
-    conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
-except:
-    pass
+conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
+#"category" below refer to event, people, location, other
+conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 
 def run_sentiment(journal_text, journal_id):
     print("[INFO] running sentiment")
