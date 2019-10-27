@@ -11,9 +11,12 @@ app = Flask(__name__)
 conn = sqlite3.connect('database.db')
 #conn.execute("DROP TABLE posts")
 #conn.execute("DROP TABLE sentiments")
-conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER)")
-#"category" below refer to event, people, location, other
-conn.execute("CREATE TABLE sentiments (id INTEGER, category TEXT, word TEXT, sentiment DECIMAL, sentiment_magnitude DECIMAL)")
+try:
+    conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER)")
+    #"category" below refer to event, people, location, other
+    conn.execute("CREATE TABLE sentiments (id INTEGER, category TEXT, word TEXT, sentiment DECIMAL, sentiment_magnitude DECIMAL)")
+except:
+    pass
 
 def run_sentiment(journal_text, journal_id):
     print("[INFO] running sentiment")
