@@ -93,11 +93,11 @@ def updateJournal(journal_id, result):
         return jsonify(-1)
 
 #date formats should be YYYY-MM-DD
-@app.route('/getJournal/<startDate>/<endDate>', methods = ['GET'])
-def getJournalDateRange(startDate, endDate):
+@app.route('/getJournal/<user>/<startDate>/<endDate>', methods = ['GET'])
+def getJournalDateRange(user,startDate, endDate):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    return jsonify(cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' and \'{endDate}\'").fetchall())
+    return jsonify(cursor.execute(f"SELECT * FROM posts WHERE day BETWEEN \'{startDate}\' and \'{endDate}\' and user = {user}").fetchall())
 
 @app.route('/updateJournal/<journal_id>', methods = ['POST'])
 def _make_update_journal(journal_id):
