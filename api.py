@@ -11,12 +11,9 @@ import threading
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
-try:
-    conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
-    #"category" below refer to event, people, location, other
-    conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
-except:
-    pass
+conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep TEXT, wake TEXT, sleepTime DECIMAL, day timestamp)")
+#"category" below refer to event, people, location, other
+conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 
 def run_sentiment(journal_text, journal_id):
     print("[INFO] running sentiment")
@@ -42,7 +39,7 @@ def run_sentiment(journal_text, journal_id):
 def makeJournal(result):
     journal = result["journal"]
     user = result["user"]
-    day = result["day"]
+    day = result["date"]
     sentiment = 0 # We'll spawn a thread to fix this soon.
     sleep = result["sleep"]
     wake = result["wake"]
@@ -81,16 +78,14 @@ def updateJournal(journal_id, result):
     sleep = result["sleep"]
     wake = result["wake"]
     sleepTime = calcSleep(sleep, wake)
-    try:
-        command = f"UPDATE posts SET journal = \"{journal}\", sleep = {sleep}, wake = {wake}, sleepTime = {sleepTime} WHERE id = {journal_id}"
-        cursor.execute(command)
-        conn.commit()
 
-        sent_thr = threading.Thread(target=run_sentiment, args=(result["journal"], journal_id,))
-        sent_thr.start()
-        return jsonify(0)
-    except:
-        return jsonify(-1)
+    command = f"UPDATE posts SET journal = \"{journal}\", sleep = \"{sleep}\", wake = \"{wake}\", sleepTime = {sleepTime} WHERE id = {journal_id}"
+    cursor.execute(command)
+    conn.commit()
+
+    sent_thr = threading.Thread(target=run_sentiment, args=(result["journal"], journal_id,))
+    sent_thr.start()
+    return jsonify(0)
 
 #date formats should be YYYY-MM-DD
 @app.route('/getJournal/<user>/<startDate>/<endDate>', methods = ['GET'])
@@ -139,7 +134,7 @@ def calcSleep(sleep, wake):
     wakeMin = (int(wakeList[0]) * 60) + int(wakeList[1])
     if sleepMin == wakeMin:
         totalMin = 24 * 60
-    else if sleepMin > wakeMin:
+    elif sleepMin > wakeMin:
         totalMin = wakeMin + (1440 - sleepMin)
     else:
         totalMin = wake - sleep
