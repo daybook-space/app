@@ -38,17 +38,30 @@ def run_sentiment(journal_text, journal_id):
 
     print(f"[INFO] Done running sentiment for journal {journal_id}")
 
+class AlreadyExist403(Exception):
+    pass
+
+@app.errorhandler(AlreadyExist403)
+def already_exist_error(error):
+    return "Journal with that date already exists!", 403
+
 def makeJournal(result):
     journal = result["journal"]
     user = result["user"]
     day = result["date"]
+
+    # sanity check
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE day = \"{day}\" AND user = \"{user}\");"
+    if cursor.execute(command).fetchall()[0][0]:
+        raise AlreadyExist403
+
     sentiment = 0 # We'll spawn a thread to fix this soon.
     sleep = result["sleep"]
     wake = result["wake"]
     sleepTime = calcSleep(sleep, wake)
 
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
     command = f"INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"{journal}\",\"{user}\",{sentiment},\"{sleep}\",\"{wake}\",{sleepTime},\"{day}\")"
     cursor.execute(command)
     journal_id = cursor.lastrowid
@@ -193,4 +206,4 @@ def calcSleep(sleep, wake):
 
 if __name__ == '__main__':
    #app.EXPLAIN_TEMPLATE_LOADING = True
-   app.run(host='0.0.0.0', port=80, debug=True)
+   app.run(host='0.0.0.0', port=5000, debug=True)
