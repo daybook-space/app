@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 import sqlite3
 
+from ml.daybookml.analysis import analyze_journal
+from ml.daybookml.summary import top_emotion_effectors
+
 app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
