@@ -200,7 +200,7 @@ def calcSleep(sleep, wake):
     elif sleepMin > wakeMin:
         totalMin = wakeMin + (1440 - sleepMin)
     else:
-        totalMin = wake - sleep
+        totalMin = wakeMin - sleepMin
     totalHour = totalMin / 60
     return totalHour
 
