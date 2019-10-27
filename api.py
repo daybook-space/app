@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 conn = sqlite3.connect('database.db')
 #conn.execute("DROP TABLE posts")
-#conn.execute("CREATE TABLE posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day TEXT)")
+conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day TEXT)")
 
 
 @app.route('/makeJournal', methods = ['POST'])
@@ -33,6 +33,12 @@ def getJournal():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     return jsonify(cursor.execute("SELECT * FROM posts LIMIT 10").fetchall())
+
+#@app.route('/getJournal/<startDate>/<endDate>', methods = ['GET'])
+#def getJournalDateRange(startDate, endDate):
+ #   conn = sqlite3.connect('database.db')
+  #  cursor = conn.cursor()
+   # return jsonify(cursor.execute("SELECT * FROM posts WHERE strp").fetchall())
 
 @app.route('/updateJournal/<Id>', methods = ['POST'])
 def updaateJournal(Id):
