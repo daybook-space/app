@@ -114,13 +114,20 @@ def _make_update_journal(journal_id):
         return updateJournal(journal_id, result)
 
 def calcSleep(sleep, wake):
-    if sleep == wake:
-        totalSleep = 24;
-    elif sleep > wake:
-        totalSleep = wake + (2400 - sleep)
+    sleepList = sleep.split(":")
+    wakeList = wake.split(":")
+    sleepMin = (int(sleepList[0]) * 60) + int(sleepList[1])
+    wakeMin = (int(wakeList[0]) * 60) + int(wakeList[1])
+    if sleepMin == wakeMin:
+        totalMin = 24 * 60
+    else if sleepMin > wakeMin:
+        totalMin = wakeMin + (1440 - sleepMin)
     else:
-        totalSleep = wake - sleep
-    return (totalSleep / 100)
+        totalMin = wake - sleep
+    totalHour = totalMin / 60
+    totalSleepMin = totalMin - (totalHour * 60)
+    totalSleep = totalHour + (totalSleepMin // 60)
+    return totalSleep
 
 if __name__ == '__main__':
    #app.EXPLAIN_TEMPLATE_LOADING = True
