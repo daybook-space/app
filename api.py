@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 import sqlite3
 
 from datetime import datetime
@@ -14,7 +14,7 @@ conn = sqlite3.connect('database.db')
 try:
     conn.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, journal TEXT, user TEXT, sentiment DECIMAL, sleep INTEGER, wake INTEGER, sleepTime INTEGER, day timestamp)")
     #"category" below refer to event, people, location, other
-    conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment DECIMAL, sentiment_magnitude DECIMAL)")
+    conn.execute("CREATE TABLE IF NOT EXISTS sentiments (id INTEGER, category TEXT, word TEXT, sentiment_score DECIMAL, sentiment_magnitude DECIMAL)")
 except:
     pass
 
@@ -33,7 +33,7 @@ def run_sentiment(journal_text, journal_id):
     for category in entity_dict:
         for entity in entity_dict[category]:
             command = f"INSERT INTO sentiments (id, category, word, sentiment_score, sentiment_magnitude) VALUES ({journal_id}, \"{category}\", \"{entity[0]}\", {entity[1]}, {entity[2]})"
-            cursor.execute(sentimentCommand)
+            cursor.execute(command)
 
     conn.commit()
 
@@ -50,7 +50,7 @@ def makeJournal(result):
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,%d,\"%s\")" %(journal, user, sentiment, sleep, wake, sleepTime, day)
+    command = "INSERT INTO posts (journal, user, sentiment, sleep, wake, sleepTime, day) VALUES (\"%s\",\"%s\",%d,%d,%d,%d,\"%s\")" %(journal, user, sentiment, sleep, wake, sleepTime, day)
     cursor.execute(command)
     journal_id = cursor.lastrowid
     conn.commit()
@@ -66,9 +66,10 @@ def updateJournal(journal_id, result):
     # sanity check!
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE id = {journal_id}, user = \"{user}\");"
-    if not cursor.execute(command):
-        return jsonify("Invalid id/user pair")
+    command = f"SELECT EXISTS(SELECT 1 FROM posts WHERE id = {journal_id} AND user = \"{user}\");"
+    if not cursor.execute(command).fetchall()[0][0]:
+        #return jsonify("Invalid id/user pair")
+        abort(403)
 
     sleep = result["sleep"]
     wake = result["wake"]
@@ -96,9 +97,9 @@ def _make_update_journal(journal_id):
     journal_id = int(journal_id)
     result = request.json
     if journal_id == 0:
-        return makeJournal(request)
+        return makeJournal(result)
     else:
-        return updateJournal(journal_id, request)
+        return updateJournal(journal_id, result)
 
 def calcSleep(sleep, wake):
     if sleep == wake:
